@@ -1,0 +1,9 @@
+TO DO
+check names to see if one exists already
+ensure no blank names
+
+
+orientation
+loss of data on close and orientation
+
+differentiate between bottle and pint on addition to DB
