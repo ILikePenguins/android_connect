@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/lbNumberPints"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/lbTotal"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="37dp"
+        android:text="Pints" />
+
+    <TextView
+        android:id="@+id/tvNumberPints"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/lbNumberPints"
+        android:layout_alignBottom="@+id/lbNumberPints"
+        android:layout_alignLeft="@+id/tvNumberBottles"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/lbTotal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/tvTotal"
+        android:layout_alignBottom="@+id/tvTotal"
+        android:layout_alignParentLeft="true"
+        android:text="Total" />
+
+    <TextView
+        android:id="@+id/tvTotal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tvNumberPints"
+        android:layout_centerVertical="true"
+        android:text="0" />
+
+    <Button
+        android:id="@+id/paidBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/tvTotal"
+        android:layout_marginRight="26dp"
+        android:layout_marginTop="66dp"
+        android:text="Paid" />
+
+    <TextView
+        android:id="@+id/lbNumberBottles"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/lbNumberPints"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="30dp"
+        android:text="Bottles" />
+
+    <Spinner
+        android:id="@+id/pintSpinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/profileNameBtn"
+        android:layout_toRightOf="@+id/bottleSpinner" />
+
+    <Spinner
+        android:id="@+id/bottleSpinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/profileNameBtn"
+        android:layout_below="@+id/profileNameBtn" />
+
+    <TextView
+        android:id="@+id/tvNumberBottles"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/lbNumberBottles"
+        android:layout_alignBottom="@+id/lbNumberBottles"
+        android:layout_marginLeft="34dp"
+        android:layout_toRightOf="@+id/lbNumberBottles"
+        android:text="0" />
+
+    <TextView
+        android:id="@+id/profileNameBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="19dp"
+        android:layout_marginTop="18dp"
+        android:layout_toRightOf="@+id/tvNumberBottles"
+        android:text="TextView" />
+
+</RelativeLayout>
