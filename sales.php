@@ -60,9 +60,31 @@ class Sales extends BaseController
 		return $result;
 	}
 
+	function saleIdExists($product_info)
+	{
+		$dbh = PDOManager::getPDO();
+		//$beerController = new Beer();
+		//$product_info = $beerController->retrieveProductInfo();
+
+		$sth = $dbh->prepare("SELECT EXISTS
+			(SELECT 1 FROM sales AS s WHERE s.beer_id=:beer_id 
+				AND s.customer_id=:customer_id AND s.event_id=:event_id) ");
+		$sth->execute(array(
+			'beer_id' => $product_info['beer_id'],
+			'event_id' => $_POST['event_id'],
+			'customer_id' => $_POST['customer_id']
+			));
+		$result = $sth->fetch(PDO::FETCH_NUM);
+		if(strcmp($result[0],"1")==0)	
+			return true;
+	
+		else
+			return false;
+	}
+
 	// Sell some shit. Yeah.
 	//TODO***check if sale idfor that customer exists, if not make new one
-	//check if entry exists where beer_id=beer_id and customer_id=customer_id
+	//check if entry exists where beer_id=:beer_id and customer_id=:customer_id and event_id=:event_id
 	//get that sale id and update isntead of new entry
 	function newSale() 
 	{
@@ -72,18 +94,25 @@ class Sales extends BaseController
 		$beerController = new Beer();
 		$product_info = $beerController->retrieveProductInfo();
 
-		$sth = $dbh->prepare("INSERT INTO sales (beer_id, event_id, customer_id, type, quantity, cost_each, cost_total)
-							 VALUES (:beer_id, :event_id, :customer_id, :type, :quantity, :cost_each, :cost_total)");
-		$sth->execute(array(
-			'beer_id' => $product_info['beer_id'],
-			'event_id' => $_POST['event_id'],
-			'customer_id' => $_POST['customer_id'],
-			'type' => $product_info['type'],
-			'quantity' => $_POST['quantity'],
-			'cost_each' => $product_info['cost_each'],
-			'cost_total' => $product_info['quantity'] * $product_info['cost_each'],
-		));
-		return $dbh->lastInsertId();
+		if( !$this->saleIdExists($product_info))
+		{
+
+			$sth = $dbh->prepare("INSERT INTO sales (beer_id, event_id, customer_id, type, quantity, cost_each, cost_total)
+								 VALUES (:beer_id, :event_id, :customer_id, :type, :quantity, :cost_each, :cost_total)");
+			$sth->execute(array(
+				'beer_id' => $product_info['beer_id'],
+				'event_id' => $_POST['event_id'],
+				'customer_id' => $_POST['customer_id'],
+				'type' => $product_info['type'],
+				'quantity' => $_POST['quantity'],
+				'cost_each' => $product_info['cost_each'],
+				'cost_total' => $product_info['quantity'] * $product_info['cost_each'],
+			));
+
+			return $dbh->lastInsertId();
+		}
+		else
+			return $this->updateSaleQty();
 	}
 
 	// Update the quantity for a particular sale (bottle or pint)
@@ -93,9 +122,9 @@ class Sales extends BaseController
 		$dbh = PDOManager::getPDO();
 		$sth = $dbh->prepare("UPDATE sales SET quantity=:quantity WHERE id=:sale_id");
 		$sth->execute(array(':sale_id' => $_POST['sale_id'], ':quantity' => $_POST['quantity']));
-		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		//$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
-		return $result;
+		return generate_response(STATUS_SUCCESS, "Beer updated successfully");
 	}
 
 	// Update the quantity for a particular sale (bottle or pint)
@@ -151,7 +180,7 @@ class Sales extends BaseController
 		return $result;
 	}
 
-	//need custoemr id?
+	//need customer id?
 	function getTotalForCustomer()
 	{
 		$dbh = PDOManager::getPDO();
@@ -162,13 +191,16 @@ class Sales extends BaseController
 		return $result;
 	}
 
+
+	// get all beers and pints conusumed by customer
+	// if beer_id doesnt exist in sales, quantity should be 0
 	function retrieveBottlesAndPintsSales()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("	SELECT b.name, p.id, p.beer_id, p.type, p.cost_each,p.event_id,s.quantity
+		$sth = $dbh->prepare("	SELECT b.name, p.id, p.beer_id, p.type, p.cost_each,p.event_id, s.quantity
 								FROM product_info as p
 								INNER JOIN beers as b ON b.id=p.beer_id
-								LEFT JOIN sales as s ON s.beer_id=p.beer_id
+								LEFT JOIN sales as s ON IFNULL(s.beer_id=p.beer_id, s.beer_id=b.id)
 								WHERE p.event_id=:event_id AND p.quantity>0 AND s.customer_id=:customer_id");
 
 		$sth->execute(array(':event_id' => $_POST['event_id'], ':customer_id' => $_POST['customer_id']));
