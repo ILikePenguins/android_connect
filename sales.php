@@ -61,6 +61,9 @@ class Sales extends BaseController
 	}
 
 	// Sell some shit. Yeah.
+	//TODO***check if sale idfor that customer exists, if not make new one
+	//check if entry exists where beer_id=beer_id and customer_id=customer_id
+	//get that sale id and update isntead of new entry
 	function newSale() 
 	{
 		$dbh = PDOManager::getPDO();
@@ -138,16 +141,17 @@ class Sales extends BaseController
 	function getPintsPurchasedByCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT SUM(s.quantity), SUM(s.cost_total)
+		$sth = $dbh->prepare("SELECT SUM(s.quantity),SUM(s.quantity)*(s.cost_each)
 		 						FROM sales AS s 
-		 						WHERE s.event_id=:event_id AND s.type=:type
+		 						WHERE s.event_id=:event_id AND s.type=:type AND s.customer_id=:customer_id
 		 						GROUP BY s.customer_id");
-		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_KEG));
+		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_KEG,':customer_id' => $_POST['customer_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;
 	}
 
+	//need custoemr id?
 	function getTotalForCustomer()
 	{
 		$dbh = PDOManager::getPDO();
