@@ -113,11 +113,11 @@ class Sales extends BaseController
 	function getBottlesPurchasedByCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("  SELECT SUM(s.quantity), SUM(s.cost_total)
+		$sth = $dbh->prepare("  SELECT SUM(s.quantity), SUM(s.quantity*s.cost_each)
 								FROM sales AS s 
-								WHERE s.event_id=:event_id AND s.type=:type
-								GROUP BY s.customer_id");
-		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_BOTTLE));
+								WHERE s.event_id=:event_id AND s.type=:type AND s.customer_id=:customer_id
+		 						GROUP BY s.customer_id");
+		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_BOTTLE,':customer_id' => $_POST['customer_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;
@@ -162,6 +162,20 @@ class Sales extends BaseController
 		return $result;
 	}
 
+	function retrieveBottlesAndPintsSales()
+	{
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("	SELECT b.name, p.id, p.beer_id, p.type, p.cost_each,p.event_id,s.quantity
+								FROM product_info as p
+								INNER JOIN beers as b ON b.id=p.beer_id
+								LEFT JOIN sales as s ON s.beer_id=p.beer_id
+								WHERE p.event_id=:event_id AND p.quantity>0 AND s.customer_id=:customer_id");
+
+		$sth->execute(array(':event_id' => $_POST['event_id'], ':customer_id' => $_POST['customer_id']));
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return $result;
+		 
+	}
 	function delete()
 	{
 		return 'delete';
