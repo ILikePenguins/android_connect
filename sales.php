@@ -1,6 +1,6 @@
 <?php
 require_once('BaseController.php');
-
+require_once('Beer.php');
 class Sales extends BaseController
 {
 	protected $required_fields = array
@@ -61,22 +61,25 @@ class Sales extends BaseController
 	}
 
 	// Sell some shit. Yeah.
-	function newSale() {
+	function newSale() 
+	{
 		$dbh = PDOManager::getPDO();
 
+	
 		$beerController = new Beer();
 		$product_info = $beerController->retrieveProductInfo();
 
-		$sth = $dbh->prepare("INSERT INTO sales (beer_id, event_id, customer_id, type, quantity, cost_each, cost_total) VALUES (:beer_id, :event_id, :customer_id, :type, :quantity, :cost_each, :cost_total)");
+		$sth = $dbh->prepare("INSERT INTO sales (beer_id, event_id, customer_id, type, quantity, cost_each, cost_total)
+							 VALUES (:beer_id, :event_id, :customer_id, :type, :quantity, :cost_each, :cost_total)");
 		$sth->execute(array(
 			'beer_id' => $product_info['beer_id'],
 			'event_id' => $_POST['event_id'],
 			'customer_id' => $_POST['customer_id'],
 			'type' => $product_info['type'],
-			'quantity' => $product_info['quantity'],
+			'quantity' => $_POST['quantity'],
 			'cost_each' => $product_info['cost_each'],
 			'cost_total' => $product_info['quantity'] * $product_info['cost_each'],
-		);
+		));
 		return $dbh->lastInsertId();
 	}
 
@@ -107,18 +110,25 @@ class Sales extends BaseController
 	function getBottlesPurchasedByCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT SUM(s.quantity), SUM(s.cost_total) FROM sales AS s GROUP BY s.customer_id WHERE s.event_id=:event_id AND s.type=:type");
+		$sth = $dbh->prepare("  SELECT SUM(s.quantity), SUM(s.cost_total)
+								FROM sales AS s 
+								WHERE s.event_id=:event_id AND s.type=:type
+								GROUP BY s.customer_id");
 		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_BOTTLE));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;
 	}
 
+
 	// Returns each sale row for a customer given event_id, customer_id
-	function getSalesForCustomer() {
+	function getSalesForCustomer() 
+	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT s.* FROM sales AS s WHERE s.event_id=:event_id AND s.customer_id=:customer_id");
-		$sth->execute(array(':event_id' => $_POST['event_id'], ':customre_id' => $_POST['customer_id']));
+		$sth = $dbh->prepare("SELECT s.* 
+							FROM sales AS s 
+							WHERE s.event_id=:event_id AND s.customer_id=:customer_id");
+		$sth->execute(array(':event_id' => $_POST['event_id'], ':customer_id' => $_POST['customer_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;
@@ -128,7 +138,10 @@ class Sales extends BaseController
 	function getPintsPurchasedByCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT SUM(s.quantity), SUM(s.cost_total) FROM sales AS s GROUP BY s.customer_id WHERE s.event_id=:event_id AND s.type=:type");
+		$sth = $dbh->prepare("SELECT SUM(s.quantity), SUM(s.cost_total)
+		 						FROM sales AS s 
+		 						WHERE s.event_id=:event_id AND s.type=:type
+		 						GROUP BY s.customer_id");
 		$sth->execute(array(':event_id' => $_POST['event_id'], ':type' => TYPE_KEG));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
@@ -138,7 +151,7 @@ class Sales extends BaseController
 	function getTotalForCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s GROUP BY s.customer_id WHERE s.event_id=:event_id");
+		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s WHERE s.event_id=:event_id GROUP BY s.customer_id ");
 		$sth->execute(array(':event_id' => $_POST['event_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		

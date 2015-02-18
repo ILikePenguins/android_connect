@@ -10,9 +10,17 @@ class Customers extends BaseController
 
 	function create() 
 	{
+		//insert into customers
+		//get that customer id
+		//insert into events_customers
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("INSERT INTO customers (name, event_id) VALUES(:name, :event_id)");
-		$sth->execute(array(':name' => $_POST['name'], ':event_id' => $_POST['event_id']));
+		$sth = $dbh->prepare("INSERT INTO customers (name) VALUES(:name)");
+		$sth->execute(array(':name' => $_POST['name']));
+
+
+		$customer_id = $dbh->lastInsertId();
+		$sth = $dbh->prepare("INSERT INTO events_customers (customer_id, event_id) VALUES(:customer_id, :event_id)");
+		$sth->execute(array(':customer_id' => $customer_id, ':event_id' => $_POST['event_id']));
 		
 		return generate_response(STATUS_SUCCESS, "Customer added successfully");
 	}

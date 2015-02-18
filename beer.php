@@ -93,7 +93,8 @@ class Beer extends BaseController
 	}
 
 	// Gets the information for a product at an event
-	function retrieveProductInfo() {
+	function retrieveProductInfo() 
+	{
 		$dbh = PDOManager::getPDO();
 		$sth = $dbh->prepare("	SELECT b.name, p.*
 								FROM product_info as p
