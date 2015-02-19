@@ -140,15 +140,12 @@ class Beer extends BaseController
 
 	function deleteBeer()
 	{
-		$id=$this->getBeerId();
+		//$id=$this->getBeerId();
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("	SELECT cost_each
-								FROM product_info
-								WHERE beer_id=:beer_id
-								AND event_id=:event_id");
+		$sth = $dbh->prepare("	DELETE FROM product_info WHERE id= :product_id");
 
-		$sth->execute(array(':beer_id' => $_POST['beer_id'], ':event_id' => $_POST['event_id']));
-
+		$sth->execute(array(':product_id' => $_POST['product_id']));
+		return generate_response(STATUS_SUCCESS, "Beer has been deleted successfully");
 	}
 
 	function delete()
