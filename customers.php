@@ -28,7 +28,7 @@ class Customers extends BaseController
 	// Gets list of customers at an event
 	function retrieveCustomersByEvent() {
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("	SELECT c.*
+		$sth = $dbh->prepare("	SELECT c.*, paid
 								FROM events_customers as ec
 								INNER JOIN customers as c ON c.id=ec.customer_id
 								WHERE ec.event_id=:event_id");

@@ -170,6 +170,18 @@ class Sales extends BaseController
 	
 	}
 
+
+	function updatePaidStatus()
+	{
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("UPDATE events_customers SET paid=:paid WHERE event_id=:event_id AND customer_id=:customer_id");
+		$sth->execute(array('event_id' => $_POST['event_id'],
+			'customer_id' => $_POST['customer_id'],'paid' => $_POST['paid'],));
+	
+			return generate_response(STATUS_SUCCESS, "Paid status updated successfully");
+	
+	}
+
 	// Update the quantity for a particular sale (bottle or pint)
 	// Requires sale ID
 	function incrementSaleQty()
