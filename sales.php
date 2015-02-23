@@ -108,7 +108,7 @@ class Sales extends BaseController
 				'type' => $product_info['type'],
 				'quantity' => $_POST['quantity'],
 				'cost_each' => $product_info['cost_each'],
-				'cost_total' => $product_info['quantity'] * $product_info['cost_each'],
+				'cost_total' => $_POST['quantity'] * $product_info['cost_each'],
 			));
 			//update product_info
 			$this->updateProductQty();
@@ -146,8 +146,8 @@ class Sales extends BaseController
 	{
 		$saleID=$this->getSaleID($product_info);
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("UPDATE sales SET quantity=:quantity WHERE id=:sale_id");
-		$sth->execute(array(':sale_id' => $saleID[0], ':quantity' => $_POST['quantity']));
+		$sth = $dbh->prepare("UPDATE sales SET quantity=:quantity , cost_total= :cost_total WHERE id=:sale_id");
+		$sth->execute(array(':sale_id' => $saleID[0], ':quantity' => $_POST['quantity'],'cost_total' => $_POST['quantity'] * $product_info['cost_each']));
 
 		//$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		//TODO check ifupdate was successful
@@ -227,8 +227,10 @@ class Sales extends BaseController
 	function getTotalForCustomer()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s WHERE s.event_id=:event_id GROUP BY s.customer_id ");
-		$sth->execute(array(':event_id' => $_POST['event_id']));
+		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s 
+							WHERE s.event_id=:event_id and customer_id=:customer_id
+						 	GROUP BY s.customer_id ");
+		$sth->execute(array(':event_id' => $_POST['event_id'],':customer_id' => $_POST['customer_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;

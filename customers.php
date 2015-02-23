@@ -22,7 +22,7 @@ class Customers extends BaseController
 		$sth = $dbh->prepare("INSERT INTO events_customers (customer_id, event_id) VALUES(:customer_id, :event_id)");
 		$sth->execute(array(':customer_id' => $customer_id, ':event_id' => $_POST['event_id']));
 		
-		return generate_response(STATUS_SUCCESS, "Customer added successfully");
+		return generate_response(STATUS_SUCCESS, "Customer added successfully",$customer_id);
 	}
 
 	// Gets list of customers at an event
