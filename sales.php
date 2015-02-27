@@ -88,7 +88,47 @@ class Sales extends BaseController
 	//get that sale id and update isntead of new entry
 
 	// need to then update the quanitty in product_info
-	function newSale() 
+
+
+
+function newSale() 
+	{
+		$dbh = PDOManager::getPDO();
+
+	
+		$beerController = new Beer();
+		$product_info = $beerController->retrieveProductInfo();
+
+		if($_POST['dec']=='0')
+		{
+			$sth = $dbh->prepare("INSERT INTO sales (beer_id, event_id, customer_id, type, quantity, cost_each, cost_total,paid)
+								 VALUES (:beer_id, :event_id, :customer_id, :type, :quantity, :cost_each, :cost_total,:paid)");
+			$sth->execute(array(
+				'beer_id' => $product_info['beer_id'],
+				'event_id' => $_POST['event_id'],
+				'customer_id' => $_POST['customer_id'],
+				'type' => $product_info['type'],
+				'quantity' => $_POST['quantity'],
+				'cost_each' => $product_info['cost_each'],
+				'cost_total' => $_POST['quantity'] * $product_info['cost_each'],
+				'paid' => '0'
+			));
+
+			$this->updateCustomerPaidStatus(0);
+			//update product_info
+			$this->updateProductQty();
+			return $dbh->lastInsertId();
+		}
+		else
+		{
+			$this->updateProductQty();
+			return $this->updateSaleQty($product_info);
+		}
+
+		
+	}
+
+	function newSale2() 
 	{
 		$dbh = PDOManager::getPDO();
 
@@ -146,9 +186,10 @@ class Sales extends BaseController
 	{
 		$saleID=$this->getSaleID($product_info);
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("UPDATE sales SET quantity=:quantity , cost_total= :cost_total WHERE id=:sale_id");
-		$sth->execute(array(':sale_id' => $saleID[0], ':quantity' => $_POST['quantity'],'cost_total' => $_POST['quantity'] * $product_info['cost_each']));
+		$sth = $dbh->prepare("UPDATE sales SET quantity=:quantity WHERE id=:sale_id");
+		$sth->execute(array(':sale_id' => $saleID[0], ':quantity' => $_POST['quantity']));
 
+		$this->updateSaleTotal($product_info);
 		//$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		//TODO check ifupdate was successful
 		// $result = $sth->fetch(PDO::FETCH_NUM);
@@ -157,6 +198,24 @@ class Sales extends BaseController
 	
 		// else
 			return generate_response(STATUS_SUCCESS, "Beer updated successfully");
+		//return 
+	}
+
+	function updateSaleTotal($product_info)
+	{
+		$saleID=$this->getSaleID($product_info);
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("UPDATE sales SET  cost_total= :cost_total WHERE id=:sale_id");
+		$sth->execute(array(':sale_id' => $saleID[0],'cost_total' => $_POST['quantity'] * $product_info['cost_each']));
+
+		//$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		//TODO check ifupdate was successful
+		// $result = $sth->fetch(PDO::FETCH_NUM);
+		// if(strcmp($result[0],"1")==0)	
+		// 	returngenerate_response(STATUS_SUCCESS, "Beer updated successfully");
+	
+		// else
+			return generate_response(STATUS_SUCCESS, "Total updated successfully");
 		//return 
 	}
 
@@ -171,13 +230,26 @@ class Sales extends BaseController
 	}
 
 
-	function updatePaidStatus()
+	function updateCustomerPaidStatus($paid)
 	{
+
 		$dbh = PDOManager::getPDO();
 		$sth = $dbh->prepare("UPDATE events_customers SET paid=:paid WHERE event_id=:event_id AND customer_id=:customer_id");
 		$sth->execute(array('event_id' => $_POST['event_id'],
-			'customer_id' => $_POST['customer_id'],'paid' => $_POST['paid'],));
+			'customer_id' => $_POST['customer_id'],'paid' => $paid));
 	
+			return generate_response(STATUS_SUCCESS, "Paid status updated successfully");
+	
+	}
+
+		function updatePaidStatus()
+	{
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("UPDATE sales SET paid=:paid WHERE event_id=:event_id AND customer_id=:customer_id");
+		$sth->execute(array('event_id' => $_POST['event_id'],
+			'customer_id' => $_POST['customer_id'],'paid' => '1'));
+
+	$this->updateCustomerPaidStatus(1);
 			return generate_response(STATUS_SUCCESS, "Paid status updated successfully");
 	
 	}
@@ -240,9 +312,25 @@ class Sales extends BaseController
 	{
 		$dbh = PDOManager::getPDO();
 		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s 
-							WHERE s.event_id=:event_id and customer_id=:customer_id
+							WHERE s.event_id=:event_id and customer_id=:customer_id 
 						 	GROUP BY s.customer_id ");
 		$sth->execute(array(':event_id' => $_POST['event_id'],':customer_id' => $_POST['customer_id']));
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		
+		return $result;
+	}
+
+	function getTotalUnpaidForCustomer()
+	{
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("SELECT SUM(s.cost_total) FROM sales AS s 
+							WHERE s.event_id=:event_id
+							 AND customer_id=:customer_id AND paid=:paid
+						 	GROUP BY s.customer_id ");
+		$sth->execute(array(
+			':event_id' => $_POST['event_id'],
+			':customer_id' => $_POST['customer_id'],
+			':paid' => '0'));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $result;
@@ -255,10 +343,13 @@ class Sales extends BaseController
 	function retrieveBottlesAndPintsSales()
 	{
 		$dbh = PDOManager::getPDO();
-		$sth = $dbh->prepare("	SELECT b.name, p.id, p.beer_id, p.type, p.cost_each, p.event_id,p.quantity AS PQ, COALESCE(s.quantity, 0) AS quantity, s.quantity
+		$sth = $dbh->prepare("	SELECT b.name, p.id, p.beer_id, p.type, p.cost_each, p.event_id,p.quantity AS PQ, COALESCE(SUM(s.quantity), 0) AS quantity
 								FROM product_info as p
 								INNER JOIN beers as b ON b.id=p.beer_id AND p.event_id=:event_id 
-								LEFT JOIN sales as s ON s.beer_id=p.beer_id AND s.event_id=:event_id AND s.customer_id=:customer_id");
+								LEFT JOIN sales as s ON s.beer_id=p.beer_id AND s.event_id=:event_id
+								 AND s.customer_id=:customer_id
+								GROUP BY p.beer_id
+								ORDER BY FIELD (p.type,'1','2')DESC ");
 
 		$sth->execute(array(':event_id' => $_POST['event_id'], ':customer_id' => $_POST['customer_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);

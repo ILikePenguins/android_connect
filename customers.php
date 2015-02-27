@@ -38,6 +38,22 @@ class Customers extends BaseController
 		return $result;
 	}
 
+		//gets list of customers at event with paid status from sals
+		function retrieveCustomersByEvent2()
+		 {
+		$dbh = PDOManager::getPDO();
+		$sth = $dbh->prepare("	SELECT c.*, s.paid
+								FROM events_customers as ec
+								INNER JOIN customers as c ON c.id=ec.customer_id
+								LEFT JOIN sales as s ON ec.customer_id=s.customer_id 
+								WHERE ec.event_id=:event_id
+								GROUP BY s.paid");
+
+		$sth->execute(array(':event_id' => $_POST['event_id']));
+		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
+		return $result;
+	}
+
 	function deleteCustomer()
 	{
 		$dbh = PDOManager::getPDO();

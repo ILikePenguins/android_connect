@@ -85,7 +85,8 @@ class Beer extends BaseController
 		$sth = $dbh->prepare("	SELECT b.name, p.*
 								FROM product_info as p
 								INNER JOIN beers as b ON b.id=p.beer_id
-								WHERE p.event_id=:event_id AND p.quantity>0");
+								WHERE p.event_id=:event_id AND p.quantity>0
+								ORDER BY FIELD (p.type,'1','2')DESC");
 
 		$sth->execute(array(':event_id' => $_POST['event_id']));
 		$result = $sth->fetchAll(PDO::FETCH_ASSOC);
